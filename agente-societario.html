@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agente Societário</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1c1c2e;
+    --paper: #f6f3ee;
+    --cream: #ece8df;
+    --gold: #b8953a;
+    --gold-lt: #e2cfa0;
+    --rust: #8b3a2a;
+    --sage: #3d5e38;
+    --mid: #6b6458;
+    --line: #d8d3c8;
+    --white: #ffffff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    background-image: radial-gradient(ellipse at 15% 0%, rgba(184,149,58,0.07) 0%, transparent 55%),
+                      radial-gradient(ellipse at 85% 100%, rgba(61,94,56,0.05) 0%, transparent 55%);
+  }
+  header {
+    border-bottom: 1px solid var(--line);
+    padding: 18px 40px;
+    display: flex; align-items: center; justify-content: space-between;
+    background: rgba(246,243,238,0.95);
+    backdrop-filter: blur(10px);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; font-weight: 700; letter-spacing: 0.03em; }
+  .logo span { color: var(--gold); }
+  .badge { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mid); background: var(--cream); border: 1px solid var(--line); padding: 4px 12px; border-radius: 20px; }
+  main { max-width: 840px; margin: 0 auto; padding: 36px 24px 80px; }
+  .page-title { font-family: 'Cormorant Garamond', serif; font-size: 2.1rem; font-weight: 700; margin-bottom: 4px; line-height: 1.2; }
+  .page-subtitle { color: var(--mid); font-size: 0.9rem; margin-bottom: 32px; }
+  .steps { display: flex; align-items: center; margin-bottom: 36px; }
+  .step-item { display: flex; align-items: center; gap: 8px; flex: 1; }
+  .step-num { width: 27px; height: 27px; border-radius: 50%; border: 1.5px solid var(--line); display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 700; color: var(--mid); flex-shrink: 0; transition: all 0.3s; }
+  .step-item.active .step-num { background: var(--gold); border-color: var(--gold); color: white; }
+  .step-item.done .step-num { background: var(--sage); border-color: var(--sage); color: white; }
+  .step-label { font-size: 0.77rem; color: var(--mid); font-weight: 500; }
+  .step-item.active .step-label { color: var(--ink); font-weight: 700; }
+  .step-line { flex: 1; height: 1px; background: var(--line); margin: 0 6px; max-width: 50px; }
+  .card { background: var(--white); border: 1px solid var(--line); border-radius: 12px; padding: 30px; margin-bottom: 18px; box-shadow: 0 2px 16px rgba(28,28,46,0.04); }
+  .card-title { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; font-weight: 700; margin-bottom: 4px; }
+  .card-desc { font-size: 0.83rem; color: var(--mid); margin-bottom: 22px; line-height: 1.55; }
+  .type-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 22px; }
+  .type-btn { border: 1.5px solid var(--line); background: var(--paper); border-radius: 10px; padding: 16px 10px; cursor: pointer; text-align: center; transition: all 0.2s; font-family: 'DM Sans', sans-serif; }
+  .type-btn:hover { border-color: var(--gold-lt); background: var(--cream); }
+  .type-btn.selected { border-color: var(--gold); background: rgba(184,149,58,0.07); }
+  .type-btn .icon { font-size: 1.5rem; margin-bottom: 6px; }
+  .type-btn .label { font-size: 0.82rem; font-weight: 700; color: var(--ink); display: block; }
+  .type-btn .sub { font-size: 0.7rem; color: var(--mid); margin-top: 2px; }
+  .society-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 22px; }
+  .society-btn { border: 1.5px solid var(--line); background: var(--paper); border-radius: 8px; padding: 10px 6px; cursor: pointer; text-align: center; font-family: 'DM Sans', sans-serif; font-size: 0.8rem; font-weight: 700; color: var(--mid); transition: all 0.2s; }
+  .society-btn:hover { border-color: var(--gold-lt); color: var(--ink); }
+  .society-btn.selected { border-color: var(--gold); background: rgba(184,149,58,0.08); color: var(--ink); }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-grid.full { grid-template-columns: 1fr; }
+  .col-full { grid-column: 1 / -1; }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  label { font-size: 0.72rem; font-weight: 700; color: var(--mid); letter-spacing: 0.06em; text-transform: uppercase; }
+  label .req { color: var(--rust); }
+  input, select, textarea { border: 1.5px solid var(--line); background: var(--paper); border-radius: 7px; padding: 9px 13px; font-family: 'DM Sans', sans-serif; font-size: 0.87rem; color: var(--ink); outline: none; transition: border-color 0.2s; }
+  input:focus, select:focus, textarea:focus { border-color: var(--gold); background: white; }
+  textarea { resize: vertical; min-height: 76px; }
+  .upload-zone { border: 2px dashed var(--line); border-radius: 10px; padding: 22px; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--paper); position: relative; }
+  .upload-zone:hover { border-color: var(--gold); background: var(--cream); }
+  .upload-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .upload-zone .icon { font-size: 1.8rem; margin-bottom: 6px; }
+  .upload-zone p { font-size: 0.81rem; color: var(--mid); }
+  .upload-zone strong { color: var(--gold); }
+  .preview-img { max-width: 100%; max-height: 160px; border-radius: 8px; margin-top: 10px; object-fit: contain; display: none; }
+  .ai-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; background: linear-gradient(135deg, var(--gold), #9a7a2e); color: white; border: none; border-radius: 20px; font-family: 'DM Sans', sans-serif; font-size: 0.74rem; font-weight: 700; cursor: pointer; margin-top: 10px; transition: all 0.2s; }
+  .ai-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(184,149,58,0.3); }
+  .alt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 18px; }
+  .alt-check { display: flex; align-items: center; gap: 10px; border: 1.5px solid var(--line); border-radius: 8px; padding: 10px 13px; cursor: pointer; transition: all 0.2s; background: var(--paper); }
+  .alt-check:hover { border-color: var(--gold-lt); }
+  .alt-check.selected { border-color: var(--gold); background: rgba(184,149,58,0.07); }
+  .alt-check input[type=checkbox] { display: none; }
+  .chk-box { width: 17px; height: 17px; border-radius: 4px; border: 1.5px solid var(--line); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; transition: all 0.2s; }
+  .alt-check.selected .chk-box { background: var(--gold); border-color: var(--gold); color: white; }
+  .alt-check span { font-size: 0.82rem; font-weight: 500; }
+  .socio-card { border: 1px solid var(--line); border-radius: 10px; padding: 18px; margin-bottom: 10px; background: var(--paper); }
+  .socio-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .socio-title { font-size: 0.84rem; font-weight: 700; color: var(--ink); }
+  .remove-btn { background: none; border: none; color: var(--rust); cursor: pointer; font-size: 0.78rem; font-weight: 700; }
+  .add-btn { width: 100%; border: 1.5px dashed var(--line); background: none; border-radius: 8px; padding: 9px; font-family: 'DM Sans', sans-serif; font-size: 0.82rem; color: var(--mid); cursor: pointer; transition: all 0.2s; font-weight: 700; }
+  .add-btn:hover { border-color: var(--gold); color: var(--gold); }
+  .btn-row { display: flex; gap: 10px; justify-content: flex-end; margin-top: 22px; }
+  .btn-secondary { padding: 10px 22px; border: 1.5px solid var(--line); background: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.86rem; font-weight: 600; color: var(--mid); cursor: pointer; transition: all 0.2s; }
+  .btn-secondary:hover { border-color: var(--ink); color: var(--ink); }
+  .btn-primary { padding: 10px 26px; border: none; background: var(--ink); color: white; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.86rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+  .btn-primary:hover { background: var(--gold); }
+  .btn-green { padding: 10px 26px; border: none; background: var(--sage); color: white; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.86rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+  .btn-green:hover { background: #2e4a2a; }
+  .btn-green:disabled { opacity: 0.4; cursor: not-allowed; }
+  .section-label { font-size: 0.69rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mid); margin: 20px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+  .preview-wrapper { background: #fafaf8; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .preview-toolbar { background: var(--cream); border-bottom: 1px solid var(--line); padding: 10px 16px; display: flex; align-items: center; gap: 8px; }
+  .preview-toolbar span { font-size: 0.75rem; color: var(--mid); font-weight: 600; flex: 1; }
+  .preview-content { padding: 40px 50px; font-family: 'Cormorant Garamond', serif; font-size: 1.05rem; line-height: 2; color: #111; white-space: pre-wrap; min-height: 300px; max-height: 540px; overflow-y: auto; }
+  .loading-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; gap: 16px; }
+  .spinner { width: 32px; height: 32px; border: 2.5px solid rgba(184,149,58,0.2); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-state p { font-size: 0.85rem; color: var(--mid); }
+  .page { display: none; animation: fadeIn 0.3s ease; }
+  .page.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  @media (max-width: 600px) {
+    .type-grid { grid-template-columns: 1fr; }
+    .society-grid { grid-template-columns: repeat(2,1fr); }
+    .form-grid { grid-template-columns: 1fr; }
+    .alt-grid { grid-template-columns: 1fr; }
+    header { padding: 14px 18px; }
+    main { padding: 22px 14px 60px; }
+    .preview-content { padding: 22px 20px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">Agente <span>Societário</span></div>
+  <div class="badge">IA Jurídica</div>
+</header>
+<main>
+  <h1 class="page-title">Elaboração de Documentos</h1>
+  <p class="page-subtitle">Gere atos societários com precisão jurídica e linguagem formal.</p>
+  <div class="steps">
+    <div class="step-item active" id="s1"><div class="step-num">1</div><div class="step-label">Tipo de Ato</div></div>
+    <div class="step-line"></div>
+    <div class="step-item" id="s2"><div class="step-num">2</div><div class="step-label">Dados</div></div>
+    <div class="step-line"></div>
+    <div class="step-item" id="s3"><div class="step-num">3</div><div class="step-label">Revisão</div></div>
+    <div class="step-line"></div>
+    <div class="step-item" id="s4"><div class="step-num">4</div><div class="step-label">Download</div></div>
+  </div>
+
+  <!-- PAGE 1 -->
+  <div class="page active" id="page1">
+    <div class="card">
+      <div class="card-title">Tipo de Ato Societário</div>
+      <div class="card-desc">Selecione a natureza do documento e o tipo de sociedade.</div>
+      <div class="type-grid">
+        <div class="type-btn" onclick="selectType('constituicao',this)"><div class="icon">🏛️</div><span class="label">Constituição</span><div class="sub">Contrato Social</div></div>
+        <div class="type-btn" onclick="selectType('alteracao',this)"><div class="icon">📝</div><span class="label">Alteração</span><div class="sub">Alteração Contratual</div></div>
+        <div class="type-btn" onclick="selectType('baixa',this)"><div class="icon">📦</div><span class="label">Baixa</span><div class="sub">Distrato Social</div></div>
+      </div>
+      <div class="card-title">Natureza Jurídica</div>
+      <div class="card-desc" style="margin-bottom:14px">Tipo da sociedade empresária.</div>
+      <div class="society-grid">
+        <div class="society-btn" onclick="selectSociety('LTDA',this)">LTDA</div>
+        <div class="society-btn" onclick="selectSociety('MEI',this)">MEI</div>
+        <div class="society-btn" onclick="selectSociety('SLU',this)">Eireli / SLU</div>
+        <div class="society-btn" onclick="selectSociety('SA',this)">S/A</div>
+      </div>
+      <div class="btn-row"><button class="btn-primary" onclick="goPage2()">Próximo →</button></div>
+    </div>
+  </div>
+
+  <!-- PAGE 2 -->
+  <div class="page" id="page2">
+    <div class="card" id="formCard"></div>
+  </div>
+
+  <!-- PAGE 3: PREVIEW -->
+  <div class="page" id="page3">
+    <div class="card">
+      <div class="card-title">Revisão do Documento</div>
+      <div class="card-desc" id="docDesc">Leia com atenção antes de gerar o arquivo Word.</div>
+      <div class="preview-wrapper">
+        <div class="preview-toolbar">
+          <span id="docLabel">Documento Gerado</span>
+          <button class="btn-secondary" style="padding:5px 14px;font-size:0.74rem" onclick="copyDoc()">📋 Copiar texto</button>
+        </div>
+        <div class="preview-content" id="previewContent">
+          <div class="loading-state"><div class="spinner"></div><p>Gerando documento com IA...</p></div>
+        </div>
+      </div>
+      <div class="btn-row" style="margin-top:18px">
+        <button class="btn-secondary" onclick="showPage(2)">← Editar</button>
+        <button class="btn-green" onclick="goPage4()" id="btnDownload" disabled>⬇ Gerar Word →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE 4: DOWNLOAD -->
+  <div class="page" id="page4">
+    <div class="card" style="text-align:center;padding:50px 30px">
+      <div style="font-size:3rem;margin-bottom:16px">📄</div>
+      <div class="card-title" style="font-size:1.5rem;margin-bottom:8px">Documento Pronto</div>
+      <p style="color:var(--mid);font-size:0.88rem;margin-bottom:30px;line-height:1.6">Arquivo Word com formatação ABNT.<br>Fonte Garamond · Margens 3cm/2cm · A4 · Espaçamento 1,5</p>
+      <div id="downloadArea"></div>
+      <div class="btn-row" style="justify-content:center;margin-top:24px">
+        <button class="btn-secondary" onclick="showPage(3)">← Visualizar</button>
+        <button class="btn-primary" onclick="newDoc()">+ Novo Documento</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="https://unpkg.com/docx@9.5.3/build/index.js"></script>
+<script>
+let selectedType='', selectedSociety='', altTypes=[], uploadedImageB64='';
+let socioCount=1, generatedText='', currentData=null;
+
+function selectType(t,el){ selectedType=t; document.querySelectorAll('.type-btn').forEach(b=>b.classList.remove('selected')); el.classList.add('selected'); }
+function selectSociety(s,el){ selectedSociety=s; document.querySelectorAll('.society-btn').forEach(b=>b.classList.remove('selected')); el.classList.add('selected'); }
+
+function setStep(n){
+  for(let i=1;i<=4;i++){
+    const el=document.getElementById('s'+i);
+    el.classList.remove('active','done');
+    if(i<n) el.classList.add('done');
+    else if(i===n) el.classList.add('active');
+  }
+}
+function showPage(n){ document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById('page'+n).classList.add('active'); setStep(n); window.scrollTo({top:0,behavior:'smooth'}); }
+function goPage2(){ if(!selectedType){alert('Selecione o tipo de ato.');return;} if(!selectedSociety){alert('Selecione o tipo societário.');return;} buildForm(); showPage(2); }
+
+function buildForm(){
+  const card=document.getElementById('formCard');
+  const tLabel={constituicao:'Constituição',alteracao:'Alteração Contratual',baixa:'Distrato / Baixa'}[selectedType];
+  let html=`<div class="card-title">${tLabel} — ${selectedSociety}</div><div class="card-desc">Preencha os campos ou envie foto do documento para extração automática.</div>`;
+  html+=`<div class="section-label">📎 Leitura automática (opcional)</div>
+  <div class="upload-zone"><input type="file" accept="image/*" onchange="handleUpload(event)">
+  <div class="icon">📄</div><p>Envie foto de <strong>RG, CNH ou Contrato Social</strong> para preencher automaticamente</p>
+  <img id="previewImg" class="preview-img"></div>
+  <button class="ai-btn" onclick="extractFromImage()" id="extractBtn" style="display:none">✨ Extrair dados com IA</button>`;
+  const showCnpjNire = selectedType !== 'constituicao';
+  html+=`<div class="section-label">🏢 Empresa</div><div class="form-grid">
+    <div class="field col-full"><label>Razão Social <span class="req">*</span></label><input type="text" id="razaoSocial" placeholder="Nome Empresarial LTDA"></div>
+    ${showCnpjNire ? `
+    <div class="field"><label>CNPJ <span class="req">*</span></label><input type="text" id="cnpj" placeholder="00.000.000/0001-00" oninput="maskCNPJ(this)"></div>
+    <div class="field"><label>NIRE <span class="req">*</span></label><input type="text" id="nire" placeholder="Número de registro na Junta"></div>` : ''}
+    <div class="field" style="position:relative">
+      <label>CEP <span class="req">*</span></label>
+      <div style="display:flex;gap:6px;align-items:center">
+        <input type="text" id="cep" placeholder="00000-000" maxlength="9" oninput="maskCEP(this)" onblur="triggerCEP(this)" style="flex:1">
+        <button type="button" onclick="lookupCEP(document.getElementById('cep').value.replace(/\D/g,''))" style="padding:9px 12px;border:1.5px solid var(--line);background:var(--cream);border-radius:7px;cursor:pointer;font-size:0.78rem;font-weight:700;color:var(--mid);font-family:'DM Sans',sans-serif;white-space:nowrap" title="Buscar CEP">🔍 Buscar</button>
+      </div>
+      <div style="margin-top:4px;min-height:16px">
+        <span id="cepSpinner" style="display:none;font-size:0.78rem;color:var(--mid)">⏳ Buscando...</span>
+        <span id="cepOk" style="display:none;color:var(--sage);font-weight:700;font-size:0.78rem">✓ Endereço preenchido</span>
+        <span id="cepErr" style="display:none;color:var(--rust);font-size:0.75rem">CEP não encontrado</span>
+      </div>
+    </div>
+    <div class="field"><label>Capital Social (R$)</label><input type="text" id="capital" placeholder="10.000,00"></div>
+    <div class="field col-full"><label>Logradouro</label><input type="text" id="endereco" placeholder="Rua / Av. — preenchido pelo CEP ou manualmente"></div>
+    <div class="field"><label>Número / Complemento</label><input type="text" id="numero" placeholder="123 / Sala 4"></div>
+    <div class="field"><label>Bairro</label><input type="text" id="bairro" placeholder="Bairro"></div>
+    <div class="field"><label>Município <span class="req">*</span></label><input type="text" id="municipio" placeholder="Cidade"></div>
+    <div class="field"><label>Estado</label><select id="estado"><option value="">Selecione</option>${['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'].map(e=>`<option>${e}</option>`).join('')}</select></div>
+  </div>`;
+  html+=`<div class="section-label">📋 Objeto Social</div><div class="form-grid full"><div class="field"><label>Ramos de Atividade</label><textarea id="objeto" placeholder="Descreva as atividades econômicas da empresa..."></textarea></div></div>`;
+  if(selectedType==='constituicao'||selectedType==='alteracao'){
+    html+=`<div class="section-label">👥 Sócios</div><div id="sociosContainer">${renderSocio(0)}</div><button class="add-btn" onclick="addSocio()" style="margin-bottom:4px">+ Adicionar Sócio</button>`;
+  }
+  if(selectedType==='alteracao'){
+    html+=`<div class="section-label">🔄 Cláusulas a Alterar</div><div class="alt-grid">
+    ${[['socio_entrada','Entrada de sócio'],['socio_saida','Saída de sócio'],['endereco','Endereço'],['atividade','Ramos de atividade'],['capital','Capital social'],['razao','Razão social']].map(([v,l])=>`<label class="alt-check" onclick="toggleAlt('${v}',this)"><input type="checkbox"><div class="chk-box">✓</div><span>${l}</span></label>`).join('')}</div>`;
+  }
+  if(selectedType==='baixa'){
+    html+=`<div class="section-label">❌ Encerramento</div><div class="form-grid">
+    <div class="field"><label>Motivo</label><select id="motivoBaixa"><option value="distrato">Distrato social por mútuo acordo</option><option value="inatividade">Inatividade</option><option value="outro">Outro</option></select></div>
+    <div class="field"><label>Data de Encerramento</label><input type="date" id="dataBaixa"></div></div>`;
+  }
+  html+=`<div class="section-label">💬 Observações</div><div class="form-grid full"><div class="field"><label>Informações adicionais</label><textarea id="obs" placeholder="Detalhes específicos para constar no documento..."></textarea></div></div>`;
+  html+=`<div class="btn-row"><button class="btn-secondary" onclick="showPage(1)">← Voltar</button><button class="btn-primary" onclick="generateDoc()">✨ Gerar Documento</button></div>`;
+  card.innerHTML=html;
+}
+
+function renderSocio(idx){
+  const sf=selectedType==='alteracao'?`<div class="field"><label>Status</label><select id="socio_status_${idx}"><option value="permanece">Permanece</option><option value="entrante">Entrante</option><option value="retirante">Retirante</option></select></div>`:'';
+  return `<div class="socio-card" id="socio_${idx}">
+  <div class="socio-header"><div class="socio-title">Sócio ${idx+1}</div>${idx>0?`<button class="remove-btn" onclick="removeSocio(${idx})">✕ Remover</button>`:''}</div>
+  <div class="form-grid">
+    <div class="field"><label>Nome Completo <span class="req">*</span></label><input type="text" id="socio_nome_${idx}" placeholder="Nome completo"></div>
+    <div class="field"><label>CPF</label><input type="text" id="socio_cpf_${idx}" placeholder="000.000.000-00"></div>
+    <div class="field"><label>RG</label><input type="text" id="socio_rg_${idx}" placeholder="Número do RG"></div>
+    <div class="field"><label>Órgão Emissor / UF</label><input type="text" id="socio_orgao_${idx}" placeholder="SSP/SP"></div>
+    <div class="field"><label>Nacionalidade</label><input type="text" id="socio_nac_${idx}" value="Brasileiro(a)"></div>
+    <div class="field"><label>Estado Civil</label><select id="socio_civil_${idx}"><option>Solteiro(a)</option><option>Casado(a)</option><option>Divorciado(a)</option><option>Viúvo(a)</option><option>União Estável</option></select></div>
+    <div class="field"><label>Profissão</label><input type="text" id="socio_prof_${idx}" placeholder="Empresário(a)"></div>
+    <div class="field"><label>Quota (R$ ou %)</label><input type="text" id="socio_cota_${idx}" placeholder="5.000,00 / 50%"></div>
+    ${sf}
+    <div class="field col-full"><label>Endereço Residencial</label><input type="text" id="socio_end_${idx}" placeholder="Rua, número, complemento, cidade/UF"></div>
+  </div></div>`;
+}
+
+function addSocio(){ socioCount++; const c=document.getElementById('sociosContainer'); const d=document.createElement('div'); d.innerHTML=renderSocio(socioCount-1); c.appendChild(d.firstElementChild); }
+function removeSocio(i){ document.getElementById('socio_'+i)?.remove(); }
+function toggleAlt(v,el){ el.classList.toggle('selected'); altTypes.includes(v)?altTypes=altTypes.filter(x=>x!==v):altTypes.push(v); }
+function maskCNPJ(el){ let v=el.value.replace(/\D/g,''); v=v.replace(/(\d{2})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1/$2').replace(/(\d{4})(\d)/,'$1-$2'); el.value=v.substring(0,18); }
+
+function maskCEP(el){
+  let v=el.value.replace(/\D/g,'');
+  if(v.length>5) v=v.substring(0,5)+'-'+v.substring(5,8);
+  el.value=v;
+}
+
+function triggerCEP(el){
+  const digits=el.value.replace(/\D/g,'');
+  if(digits.length===8) lookupCEP(digits);
+}
+
+async function lookupCEP(cep){
+  cep=String(cep).replace(/\D/g,'');
+  if(cep.length!==8) return;
+  const spinner=document.getElementById('cepSpinner');
+  const ok=document.getElementById('cepOk');
+  const err=document.getElementById('cepErr');
+  if(spinner){spinner.style.display='inline';}
+  if(ok){ok.style.display='none';}
+  if(err){err.style.display='none';}
+  try{
+    // try ViaCEP first, fallback to brasilapi
+    let d=null;
+    try{
+      const res=await fetch('https://viacep.com.br/ws/'+cep+'/json/');
+      d=await res.json();
+      if(d.erro) d=null;
+    }catch(e1){ d=null; }
+    if(!d){
+      const res2=await fetch('https://brasilapi.com.br/api/cep/v1/'+cep);
+      if(res2.ok){
+        const d2=await res2.json();
+        d={logradouro:d2.street,bairro:d2.neighborhood,localidade:d2.city,uf:d2.state};
+      }
+    }
+    if(spinner){spinner.style.display='none';}
+    if(!d){ if(err){err.style.display='inline';} return; }
+    const s=(id,val)=>{const el=document.getElementById(id);if(el&&val&&val.trim())el.value=val.trim();};
+    s('endereco',d.logradouro);
+    s('bairro',d.bairro);
+    s('municipio',d.localidade);
+    const est=document.getElementById('estado');
+    if(est&&d.uf){ for(let o of est.options){ if(o.value===d.uf){est.value=d.uf;break;} } }
+    if(ok){ok.style.display='inline';}
+    setTimeout(()=>{ const n=document.getElementById('numero'); if(n) n.focus(); },150);
+  }catch(e){
+    if(spinner){spinner.style.display='none';}
+    if(err){err.style.display='inline';}
+  }
+}
+
+function handleUpload(e){
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{ uploadedImageB64=ev.target.result; const img=document.getElementById('previewImg'); img.src=uploadedImageB64; img.style.display='block'; document.getElementById('extractBtn').style.display='inline-flex'; };
+  reader.readAsDataURL(file);
+}
+
+async function extractFromImage(){
+  const btn=document.getElementById('extractBtn'); btn.textContent='⏳ Extraindo...'; btn.disabled=true;
+  try{
+    const b64=uploadedImageB64.split(',')[1]; const mime=uploadedImageB64.split(';')[0].split(':')[1];
+    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:800,messages:[{role:"user",content:[
+        {type:"image",source:{type:"base64",media_type:mime,data:b64}},
+        {type:"text",text:`Extraia os dados deste documento em JSON com campos: nome, cpf, rg, orgao_emissor, nacionalidade, endereco, municipio, estado, cep, cnpj, razao_social. Retorne APENAS o JSON.`}
+      ]}]})});
+    const d=await res.json();
+    const parsed=JSON.parse(d.content[0].text.replace(/```json|```/g,'').trim());
+    const m=(id,val)=>{const el=document.getElementById(id);if(el&&val)el.value=val;};
+    m('razaoSocial',parsed.razao_social); m('cnpj',parsed.cnpj); m('endereco',parsed.endereco);
+    m('municipio',parsed.municipio); m('estado',parsed.estado); m('cep',parsed.cep);
+    m('socio_nome_0',parsed.nome); m('socio_cpf_0',parsed.cpf); m('socio_rg_0',parsed.rg);
+    m('socio_orgao_0',parsed.orgao_emissor); m('socio_nac_0',parsed.nacionalidade);
+    btn.textContent='✅ Dados extraídos!'; btn.style.background='linear-gradient(135deg,#3d5e38,#2e4a2a)';
+  }catch(e){ btn.textContent='❌ Tente novamente'; btn.disabled=false; }
+}
+
+function collectData(){
+  const g=id=>{const el=document.getElementById(id);return el?el.value.trim():'';};
+  const logradouro=g('endereco'), numero=g('numero'), bairro=g('bairro');
+  const enderecoCompleto=[logradouro,numero,bairro].filter(Boolean).join(', ');
+  const data={tipo:selectedType,tipoSociedade:selectedSociety,razaoSocial:g('razaoSocial'),cnpj:g('cnpj'),nire:g('nire'),
+    endereco:enderecoCompleto,municipio:g('municipio'),estado:g('estado'),cep:g('cep'),capital:g('capital'),
+    objeto:g('objeto'),obs:g('obs'),alteracoes:[...altTypes],socios:[],
+    motivoBaixa:g('motivoBaixa'),dataBaixa:g('dataBaixa')};
+  for(let i=0;i<socioCount;i++){
+    if(!document.getElementById('socio_'+i)) continue;
+    const nome=g(`socio_nome_${i}`); if(!nome) continue;
+    data.socios.push({nome,cpf:g(`socio_cpf_${i}`),rg:g(`socio_rg_${i}`),orgao:g(`socio_orgao_${i}`),
+      nac:g(`socio_nac_${i}`),civil:g(`socio_civil_${i}`),prof:g(`socio_prof_${i}`),
+      cota:g(`socio_cota_${i}`),status:g(`socio_status_${i}`),end:g(`socio_end_${i}`)});
+  }
+  return data;
+}
+
+async function generateDoc(){
+  const data=collectData(); if(!data.razaoSocial){alert('Informe a Razão Social.');return;}
+  currentData=data; showPage(3);
+  document.getElementById('btnDownload').disabled=true;
+  const tLabel={constituicao:'Constituição',alteracao:'Alteração Contratual',baixa:'Distrato / Baixa'}[data.tipo];
+  document.getElementById('docLabel').textContent=`${tLabel} · ${data.tipoSociedade} · ${data.razaoSocial}`;
+  document.getElementById('docDesc').textContent=`${tLabel} · ${data.tipoSociedade} · ${data.razaoSocial} · Revise antes de baixar.`;
+  document.getElementById('previewContent').innerHTML='<div class="loading-state"><div class="spinner"></div><p>Gerando documento com IA...</p></div>';
+
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:3500,messages:[{role:"user",content:buildPrompt(data,tLabel)}]})});
+    const result=await res.json();
+    generatedText=result.content[0].text;
+    document.getElementById('previewContent').textContent=generatedText;
+    document.getElementById('btnDownload').disabled=false;
+  }catch(e){ document.getElementById('previewContent').textContent='Erro ao gerar. Verifique a conexão.'; }
+}
+
+function buildPrompt(data,tLabel){
+  const hoje=new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
+  const socios=data.socios.map((s,i)=>`${i+1}. ${s.nome}, ${s.nac||'brasileiro(a)'}, ${s.civil||'[estado civil]'}, ${s.prof||'[profissão]'}, CPF nº ${s.cpf||'[CPF]'}, RG nº ${s.rg||'[RG]'} ${s.orgao||''}, residente na ${s.end||'[endereço]'}${s.status&&s.status!=='permanece'?` (${s.status==='entrante'?'ENTRANTE':'RETIRANTE'})`:''}${s.cota?`, titular de quotas no valor de R$ ${s.cota}`:''}`).join('\n');
+
+  let instrucoes='';
+  if(data.tipo==='constituicao'){
+    instrucoes=`Elabore o CONTRATO SOCIAL DE CONSTITUIÇÃO de sociedade empresária ${data.tipoSociedade}, contendo EXCLUSIVAMENTE as cláusulas obrigatórias previstas no art. 997 do Código Civil e legislação aplicável ao tipo ${data.tipoSociedade}:
+CLÁUSULA PRIMEIRA — Denominação, sede e foro
+CLÁUSULA SEGUNDA — Objeto social e prazo de duração
+CLÁUSULA TERCEIRA — Capital social, divisão e integralização de quotas
+CLÁUSULA QUARTA — Qualificação dos sócios e participação no capital
+CLÁUSULA QUINTA — Administração: nome(s) do(s) administrador(es), poderes e vedações
+CLÁUSULA SEXTA — Distribuição de lucros e suprimento de perdas
+CLÁUSULA SÉTIMA — Deliberações sociais e quórum
+CLÁUSULA OITAVA — Retirada, exclusão de sócio e dissolução
+Use algarismos ordinais por extenso para nomear as cláusulas.`;
+  } else if(data.tipo==='alteracao'){
+    const alts=data.alteracoes.length?data.alteracoes.join(', '):'conforme dados fornecidos';
+    instrucoes=`Elabore a ALTERAÇÃO DO CONTRATO SOCIAL, contendo:
+PREÂMBULO — identificação da empresa (razão social, CNPJ, NIRE), sócios presentes, declaração de quórum e validade
+Para cada alteração solicitada (${alts}): redigir nova cláusula com redação integral, indicando qual cláusula está sendo substituída
+CLÁUSULA FINAL — Ratificação das demais cláusulas e condições inalteradas do contrato social; providências de arquivamento na Junta Comercial`;
+  } else {
+    instrucoes=`Elabore o DISTRATO SOCIAL, contendo:
+PREÂMBULO — qualificação completa da empresa e dos sócios
+CLÁUSULA PRIMEIRA — Deliberação unânime de dissolução e encerramento
+CLÁUSULA SEGUNDA — Motivo do encerramento e data de cessação das atividades
+CLÁUSULA TERCEIRA — Nomeação do liquidante (ou declaração de liquidação imediata)
+CLÁUSULA QUARTA — Declaração sobre o passivo: inexistência ou responsabilidade pelo passivo existente
+CLÁUSULA QUINTA — Partilha do acervo líquido proporcionalmente às quotas
+CLÁUSULA SEXTA — Quitação mútua, plena e irrevogável entre os sócios
+CLÁUSULA SÉTIMA — Providências: baixa na Junta Comercial, Receita Federal e demais órgãos`;
+  }
+
+  return `Você é um advogado especialista em direito societário brasileiro. Redija documentos com linguagem jurídica precisa, formal e objetiva. Use APENAS as cláusulas que a lei exige. Sem proteções excessivas, sem condições hipotéticas, sem redundâncias. Enxuto, completo e impecável.
+
+INSTRUÇÃO: ${instrucoes}
+
+DADOS:
+- Razão Social: ${data.razaoSocial}
+- CNPJ: ${data.cnpj||'[a definir]'}
+- NIRE: ${data.nire||'[a definir]'}
+- Sede: ${data.endereco}, ${data.municipio}/${data.estado}${data.cep?`, CEP ${data.cep}`:''}
+- Capital Social: R$ ${data.capital||'[a definir]'}
+- Objeto Social: ${data.objeto||'[a definir]'}
+${data.socios.length?`\nSÓCIOS:\n${socios}`:''}
+${data.motivoBaixa?`\nMotivo da baixa: ${data.motivoBaixa}`:''}
+${data.dataBaixa?`Data de encerramento: ${new Date(data.dataBaixa+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'})}`:''}
+${data.obs?`\nObservações: ${data.obs}`:''}
+
+Data de elaboração: ${hoje}
+
+FORMATAÇÃO:
+- Use [____________] para dados não informados
+- Nomeie cláusulas em ordinais por extenso maiúsculos (CLÁUSULA PRIMEIRA, CLÁUSULA SEGUNDA...)
+- Inicie com cabeçalho formal centrado
+- Finalize com bloco de assinaturas: sócios + 2 testemunhas (nome/CPF/RG)
+- Retorne SOMENTE o texto do documento, sem comentários externos`;
+}
+
+function copyDoc(){
+  navigator.clipboard.writeText(generatedText).then(()=>{ const b=document.querySelector('[onclick="copyDoc()"]'); if(b){b.textContent='✅ Copiado!'; setTimeout(()=>b.textContent='📋 Copiar texto',2000);} });
+}
+
+async function goPage4(){ showPage(4); document.getElementById('downloadArea').innerHTML='<div class="loading-state"><div class="spinner"></div><p>Gerando Word com formatação ABNT...</p></div>'; try{ await generateWord(); }catch(e){ document.getElementById('downloadArea').innerHTML=`<p style="color:var(--rust)">Erro: ${e.message}</p>`; } }
+
+async function generateWord(){
+  const {Document,Packer,Paragraph,TextRun,AlignmentType}=docx;
+  const data=currentData||collectData();
+  const tLabel={constituicao:'CONTRATO SOCIAL DE CONSTITUIÇÃO',alteracao:'ALTERAÇÃO DO CONTRATO SOCIAL',baixa:'DISTRATO SOCIAL'}[data.tipo];
+  const lines=generatedText.split('\n');
+  const children=[];
+
+  // Cabeçalho
+  children.push(new Paragraph({alignment:AlignmentType.CENTER,spacing:{after:200},children:[new TextRun({text:tLabel,font:'Garamond',size:28,bold:true,allCaps:true})]}));
+  children.push(new Paragraph({alignment:AlignmentType.CENTER,spacing:{after:480},children:[new TextRun({text:`${data.tipoSociedade} · ${data.razaoSocial}`,font:'Garamond',size:22,color:'666666'})]}));
+
+  for(const line of lines){
+    const t=line.trim();
+    if(!t){ children.push(new Paragraph({spacing:{after:0},children:[new TextRun('')]})); continue; }
+    const isClause=/^CL[ÁA]USULA\s+[A-ZÁÉÍÓÚÂÊÎÔÛÃÕÇÀÈÌÒÙÜ]+/i.test(t)||/^PREÂMBULO/i.test(t)||/^DISTRATO/i.test(t)||/^CONTRATO SOCIAL/i.test(t);
+    const isTitle=t.length<80&&t===t.toUpperCase()&&/[A-Z]{3,}/.test(t);
+    if(isClause){
+      children.push(new Paragraph({spacing:{before:360,after:120},children:[new TextRun({text:t,font:'Garamond',size:24,bold:true})]}));
+    } else if(isTitle){
+      children.push(new Paragraph({alignment:AlignmentType.CENTER,spacing:{before:200,after:200},children:[new TextRun({text:t,font:'Garamond',size:24,bold:true})]}));
+    } else {
+      children.push(new Paragraph({alignment:AlignmentType.JUSTIFIED,spacing:{before:0,after:0,line:360,lineRule:'auto'},indent:{firstLine:709},children:[new TextRun({text:t,font:'Garamond',size:24})]}));
+    }
+  }
+
+  const doc=new Document({sections:[{
+    properties:{page:{
+      size:{width:11906,height:16838}, // A4
+      margin:{top:1701,right:1134,bottom:1134,left:1701} // ABNT: 3cm cima/esq, 2cm dir/baixo
+    }},
+    children
+  }]});
+
+  const buffer=await Packer.toBuffer(doc);
+  const blob=new Blob([buffer],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+  const url=URL.createObjectURL(blob);
+  const fname=`${data.tipo}_${data.razaoSocial.replace(/[^a-zA-Z0-9]/g,'_').substring(0,40)}.docx`;
+
+  document.getElementById('downloadArea').innerHTML=`
+    <a href="${url}" download="${fname}" style="display:inline-flex;align-items:center;gap:10px;padding:14px 36px;background:var(--sage);color:white;border-radius:10px;text-decoration:none;font-weight:700;font-size:0.95rem;font-family:'DM Sans',sans-serif">
+      📥 Baixar documento Word
+    </a>
+    <p style="margin-top:14px;font-size:0.78rem;color:var(--mid)">Garamond · ABNT · Margens 3cm/2cm · A4 · Espaçamento 1,5</p>`;
+}
+
+function newDoc(){ selectedType=''; selectedSociety=''; altTypes=[]; uploadedImageB64=''; socioCount=1; generatedText=''; currentData=null; document.querySelectorAll('.type-btn,.society-btn').forEach(b=>b.classList.remove('selected')); showPage(1); }
+</script>
+</body>
+</html>
