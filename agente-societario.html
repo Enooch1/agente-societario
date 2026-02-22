@@ -52,7 +52,7 @@
   .card { background: var(--white); border: 1px solid var(--line); border-radius: 12px; padding: 30px; margin-bottom: 18px; box-shadow: 0 2px 16px rgba(28,28,46,0.04); }
   .card-title { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; font-weight: 700; margin-bottom: 4px; }
   .card-desc { font-size: 0.83rem; color: var(--mid); margin-bottom: 22px; line-height: 1.55; }
-  .type-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 22px; }
+  .type-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 22px; }
   .type-btn { border: 1.5px solid var(--line); background: var(--paper); border-radius: 10px; padding: 16px 10px; cursor: pointer; text-align: center; transition: all 0.2s; font-family: 'DM Sans', sans-serif; }
   .type-btn:hover { border-color: var(--gold-lt); background: var(--cream); }
   .type-btn.selected { border-color: var(--gold); background: rgba(184,149,58,0.07); }
@@ -129,7 +129,10 @@
 <body>
 <header>
   <div class="logo">Agente <span>Societário</span></div>
-  <div class="badge">IA Jurídica</div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <div id="apiKeyStatus" style="font-size:0.7rem;font-weight:700;padding:4px 10px;border-radius:20px;background:#fef3c7;color:#92400e;border:1px solid #fde68a;cursor:pointer" onclick="showApiConfig()" title="Configurar API Key">⚙️ API Key</div>
+    <div class="badge">IA Jurídica</div>
+  </div>
 </header>
 <main>
   <h1 class="page-title">Elaboração de Documentos</h1>
@@ -152,6 +155,7 @@
       <div class="type-grid">
         <div class="type-btn" onclick="selectType('constituicao',this)"><div class="icon">🏛️</div><span class="label">Constituição</span><div class="sub">Contrato Social</div></div>
         <div class="type-btn" onclick="selectType('alteracao',this)"><div class="icon">📝</div><span class="label">Alteração</span><div class="sub">Alteração Contratual</div></div>
+        <div class="type-btn" onclick="selectType('transformacao',this)"><div class="icon">🔄</div><span class="label">Transformação</span><div class="sub">MEI → LTDA / SLU</div></div>
         <div class="type-btn" onclick="selectType('baixa',this)"><div class="icon">📦</div><span class="label">Baixa</span><div class="sub">Distrato Social</div></div>
       </div>
       <div class="card-title">Natureza Jurídica</div>
@@ -207,10 +211,57 @@
   </div>
 </main>
 
+<!-- API KEY MODAL -->
+<div id="apiModal" style="display:none;position:fixed;inset:0;background:rgba(28,28,46,0.5);z-index:1000;display:none;align-items:center;justify-content:center">
+  <div style="background:white;border-radius:14px;padding:32px;max-width:480px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:700;margin-bottom:8px">Configurar API Key</div>
+    <p style="font-size:0.83rem;color:#6b6458;margin-bottom:6px;line-height:1.6">Obtenha sua chave em <a href="https://console.anthropic.com" target="_blank" style="color:#b8953a">console.anthropic.com</a> → API Keys.</p>
+    <p style="font-size:0.78rem;color:#6b6458;margin-bottom:18px;line-height:1.5">A chave fica salva <strong>apenas no seu navegador</strong> (localStorage) e nunca é enviada a terceiros.</p>
+    <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:18px">
+      <label style="font-size:0.72rem;font-weight:700;color:#6b6458;letter-spacing:0.06em;text-transform:uppercase">Sua API Key</label>
+      <input type="password" id="apiKeyInput" placeholder="sk-ant-..." style="border:1.5px solid #d8d3c8;background:#f6f3ee;border-radius:7px;padding:10px 13px;font-family:'DM Sans',sans-serif;font-size:0.87rem;color:#1c1c2e;outline:none">
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button onclick="closeApiModal()" style="padding:9px 20px;border:1.5px solid #d8d3c8;background:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.85rem;font-weight:600;color:#6b6458;cursor:pointer">Cancelar</button>
+      <button onclick="saveApiKey()" style="padding:9px 22px;border:none;background:#1c1c2e;color:white;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.85rem;font-weight:700;cursor:pointer">Salvar</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://unpkg.com/docx@9.5.3/build/index.js"></script>
 <script>
 let selectedType='', selectedSociety='', altTypes=[], uploadedImageB64='';
 let socioCount=1, generatedText='', currentData=null;
+
+function getApiKey(){ return localStorage.getItem('anthropic_api_key')||''; }
+function showApiConfig(){
+  document.getElementById('apiModal').style.display='flex';
+  document.getElementById('apiKeyInput').value=getApiKey();
+}
+function closeApiModal(){ document.getElementById('apiModal').style.display='none'; }
+function saveApiKey(){
+  const key=document.getElementById('apiKeyInput').value.trim();
+  if(!key){ alert('Cole sua API Key.'); return; }
+  localStorage.setItem('anthropic_api_key',key);
+  updateKeyStatus();
+  closeApiModal();
+}
+function updateKeyStatus(){
+  const el=document.getElementById('apiKeyStatus');
+  if(!el) return;
+  if(getApiKey()){ el.style.background='#d1fae5'; el.style.color='#065f46'; el.style.borderColor='#6ee7b7'; el.textContent='✓ API Key'; }
+  else { el.style.background='#fef3c7'; el.style.color='#92400e'; el.style.borderColor='#fde68a'; el.textContent='⚙️ API Key'; }
+}
+
+function apiFetch(body){
+  const key=getApiKey();
+  if(!key){ showApiConfig(); throw new Error('API Key não configurada.'); }
+  return fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify(body)
+  });
+}
 
 function selectType(t,el){ selectedType=t; document.querySelectorAll('.type-btn').forEach(b=>b.classList.remove('selected')); el.classList.add('selected'); }
 function selectSociety(s,el){ selectedSociety=s; document.querySelectorAll('.society-btn').forEach(b=>b.classList.remove('selected')); el.classList.add('selected'); }
@@ -224,11 +275,11 @@ function setStep(n){
   }
 }
 function showPage(n){ document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById('page'+n).classList.add('active'); setStep(n); window.scrollTo({top:0,behavior:'smooth'}); }
-function goPage2(){ if(!selectedType){alert('Selecione o tipo de ato.');return;} if(!selectedSociety){alert('Selecione o tipo societário.');return;} buildForm(); showPage(2); }
+function goPage2(){ if(!selectedType){alert('Selecione o tipo de ato.');return;} if(!selectedSociety){alert('Selecione o tipo societário.');return;} altTypes=[]; buildForm(); showPage(2); }
 
 function buildForm(){
   const card=document.getElementById('formCard');
-  const tLabel={constituicao:'Constituição',alteracao:'Alteração Contratual',baixa:'Distrato / Baixa'}[selectedType];
+  const tLabel={constituicao:'Constituição',alteracao:'Alteração Contratual',transformacao:'Transformação MEI',baixa:'Distrato / Baixa'}[selectedType];
   let html=`<div class="card-title">${tLabel} — ${selectedSociety}</div><div class="card-desc">Preencha os campos ou envie foto do documento para extração automática.</div>`;
   html+=`<div class="section-label">📎 Leitura automática (opcional)</div>
   <div class="upload-zone"><input type="file" accept="image/*" onchange="handleUpload(event)">
@@ -236,6 +287,7 @@ function buildForm(){
   <img id="previewImg" class="preview-img"></div>
   <button class="ai-btn" onclick="extractFromImage()" id="extractBtn" style="display:none">✨ Extrair dados com IA</button>`;
   const showCnpjNire = selectedType !== 'constituicao';
+  const isTransformacao = selectedType === 'transformacao';
   html+=`<div class="section-label">🏢 Empresa</div><div class="form-grid">
     <div class="field col-full"><label>Razão Social <span class="req">*</span></label><input type="text" id="razaoSocial" placeholder="Nome Empresarial LTDA"></div>
     ${showCnpjNire ? `
@@ -266,7 +318,19 @@ function buildForm(){
   }
   if(selectedType==='alteracao'){
     html+=`<div class="section-label">🔄 Cláusulas a Alterar</div><div class="alt-grid">
-    ${[['socio_entrada','Entrada de sócio'],['socio_saida','Saída de sócio'],['endereco','Endereço'],['atividade','Ramos de atividade'],['capital','Capital social'],['razao','Razão social']].map(([v,l])=>`<label class="alt-check" onclick="toggleAlt('${v}',this)"><input type="checkbox"><div class="chk-box">✓</div><span>${l}</span></label>`).join('')}</div>`;
+    ${[['socio_entrada','Entrada de sócio'],['socio_saida','Saída de sócio'],['endereco','Endereço'],['atividade','Ramos de atividade'],['capital','Capital social'],['razao','Razão social']].map(([v,l])=>`<div class="alt-check" id="alt_${v}" onclick="toggleAlt('${v}',this)"><div class="chk-box" id="chk_${v}">✓</div><span>${l}</span></div>`).join('')}</div>`;
+  }
+  if(selectedType==='transformacao'){
+    html+=`<div class="section-label">🔄 Dados da Transformação (MEI → Nova Natureza)</div>
+    <div class="form-grid">
+      <div class="field col-full" style="background:rgba(184,149,58,0.06);border:1px solid var(--gold-lt);border-radius:8px;padding:12px 14px;font-size:0.82rem;color:var(--mid);line-height:1.6">
+        ℹ️ A transformação converte o MEI em sociedade empresária (LTDA ou SLU) com base no <strong>art. 968, §3º do Código Civil</strong>. O CNPJ é mantido. O acervo do MEI forma o capital social da nova sociedade.
+      </div>
+      <div class="field"><label>Novo Tipo Societário</label><select id="novoTipo"><option value="LTDA">LTDA — Sociedade Limitada</option><option value="SLU">SLU — Sociedade Limitada Unipessoal</option></select></div>
+      <div class="field"><label>Novo Nome Empresarial</label><input type="text" id="novoNome" placeholder="Nome Empresarial LTDA"></div>
+      <div class="field"><label>Valor do Acervo (R$)</label><input type="text" id="valorAcervo" placeholder="Valor do acervo que forma o capital social"></div>
+      <div class="field"><label>Data da Transformação</label><input type="date" id="dataTransformacao"></div>
+    </div>`;
   }
   if(selectedType==='baixa'){
     html+=`<div class="section-label">❌ Encerramento</div><div class="form-grid">
@@ -284,7 +348,7 @@ function renderSocio(idx){
   <div class="socio-header"><div class="socio-title">Sócio ${idx+1}</div>${idx>0?`<button class="remove-btn" onclick="removeSocio(${idx})">✕ Remover</button>`:''}</div>
   <div class="form-grid">
     <div class="field"><label>Nome Completo <span class="req">*</span></label><input type="text" id="socio_nome_${idx}" placeholder="Nome completo"></div>
-    <div class="field"><label>CPF</label><input type="text" id="socio_cpf_${idx}" placeholder="000.000.000-00"></div>
+    <div class="field"><label>CPF</label><input type="text" id="socio_cpf_${idx}" placeholder="000.000.000-00" oninput="maskCPF(this)" maxlength="14"></div>
     <div class="field"><label>RG</label><input type="text" id="socio_rg_${idx}" placeholder="Número do RG"></div>
     <div class="field"><label>Órgão Emissor / UF</label><input type="text" id="socio_orgao_${idx}" placeholder="SSP/SP"></div>
     <div class="field"><label>Nacionalidade</label><input type="text" id="socio_nac_${idx}" value="Brasileiro(a)"></div>
@@ -292,14 +356,97 @@ function renderSocio(idx){
     <div class="field"><label>Profissão</label><input type="text" id="socio_prof_${idx}" placeholder="Empresário(a)"></div>
     <div class="field"><label>Quota (R$ ou %)</label><input type="text" id="socio_cota_${idx}" placeholder="5.000,00 / 50%"></div>
     ${sf}
-    <div class="field col-full"><label>Endereço Residencial</label><input type="text" id="socio_end_${idx}" placeholder="Rua, número, complemento, cidade/UF"></div>
+    <div class="field col-full" style="border-top:1px solid var(--line);padding-top:14px;margin-top:4px">
+      <label style="margin-bottom:8px;display:block">Endereço Residencial</label>
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:10px">
+        <div style="flex:0 0 160px">
+          <label>CEP</label>
+          <div style="display:flex;gap:5px;align-items:center">
+            <input type="text" id="socio_cep_${idx}" placeholder="00000-000" maxlength="9"
+              oninput="maskSocioCEP(this,${idx})" onblur="triggerSocioCEP(this,${idx})" style="width:100%">
+            <button type="button" onclick="lookupSocioCEP(${idx})"
+              style="padding:9px 10px;border:1.5px solid var(--line);background:var(--cream);border-radius:7px;cursor:pointer;font-size:0.78rem;font-weight:700;color:var(--mid);font-family:'DM Sans',sans-serif;white-space:nowrap">🔍</button>
+          </div>
+          <div style="min-height:14px;margin-top:3px">
+            <span id="socio_cep_spinner_${idx}" style="display:none;font-size:0.72rem;color:var(--mid)">⏳ Buscando...</span>
+            <span id="socio_cep_ok_${idx}" style="display:none;color:var(--sage);font-size:0.72rem;font-weight:700">✓ Preenchido</span>
+            <span id="socio_cep_err_${idx}" style="display:none;color:var(--rust);font-size:0.72rem">CEP não encontrado</span>
+          </div>
+        </div>
+        <div style="flex:1">
+          <label>Logradouro</label>
+          <input type="text" id="socio_logradouro_${idx}" placeholder="Rua / Av.">
+        </div>
+      </div>
+      <div class="form-grid" style="margin-top:0">
+        <div class="field">
+          <label>Número / Complemento</label>
+          <input type="text" id="socio_numero_${idx}" placeholder="123 / Apto 4">
+        </div>
+        <div class="field">
+          <label>Bairro</label>
+          <input type="text" id="socio_bairro_${idx}" placeholder="Bairro">
+        </div>
+        <div class="field">
+          <label>Município</label>
+          <input type="text" id="socio_municipio_${idx}" placeholder="Cidade">
+        </div>
+        <div class="field">
+          <label>Estado</label>
+          <select id="socio_uf_${idx}"><option value="">UF</option>${['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'].map(e=>`<option>${e}</option>`).join('')}</select>
+        </div>
+      </div>
+    </div>
   </div></div>`;
 }
 
 function addSocio(){ socioCount++; const c=document.getElementById('sociosContainer'); const d=document.createElement('div'); d.innerHTML=renderSocio(socioCount-1); c.appendChild(d.firstElementChild); }
 function removeSocio(i){ document.getElementById('socio_'+i)?.remove(); }
-function toggleAlt(v,el){ el.classList.toggle('selected'); altTypes.includes(v)?altTypes=altTypes.filter(x=>x!==v):altTypes.push(v); }
+function toggleAlt(v,el){
+  if(altTypes.includes(v)){
+    altTypes=altTypes.filter(x=>x!==v);
+    el.classList.remove('selected');
+  } else {
+    altTypes.push(v);
+    el.classList.add('selected');
+  }
+}
 function maskCNPJ(el){ let v=el.value.replace(/\D/g,''); v=v.replace(/(\d{2})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1/$2').replace(/(\d{4})(\d)/,'$1-$2'); el.value=v.substring(0,18); }
+
+function maskCPF(el){
+  let v=el.value.replace(/\D/g,'');
+  v=v.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2');
+  el.value=v.substring(0,14);
+  if(v.replace(/\D/g,'').length===11) validateCPF(el);
+  else clearCPFStatus(el);
+}
+
+function validateCPF(el){
+  const cpf=el.value.replace(/\D/g,'');
+  let valid=true;
+  if(cpf.length!==11||/^(\d)\1{10}$/.test(cpf)) valid=false;
+  if(valid){
+    let sum=0;
+    for(let i=0;i<9;i++) sum+=parseInt(cpf[i])*(10-i);
+    let r=11-(sum%11); let d1=(r>=10)?0:r;
+    if(d1!==parseInt(cpf[9])) valid=false;
+    sum=0;
+    for(let i=0;i<10;i++) sum+=parseInt(cpf[i])*(11-i);
+    r=11-(sum%11); let d2=(r>=10)?0:r;
+    if(d2!==parseInt(cpf[10])) valid=false;
+  }
+  const feedbackId='cpf_status_'+el.id;
+  let fb=document.getElementById(feedbackId);
+  if(!fb){ fb=document.createElement('span'); fb.id=feedbackId; fb.style.cssText='font-size:0.7rem;font-weight:700;margin-top:2px;display:block'; el.parentNode.appendChild(fb); }
+  if(valid){ fb.style.color='var(--sage)'; fb.textContent='✓ CPF válido'; el.style.borderColor='var(--sage)'; }
+  else { fb.style.color='var(--rust)'; fb.textContent='✗ CPF inválido'; el.style.borderColor='var(--rust)'; }
+}
+
+function clearCPFStatus(el){
+  const fb=document.getElementById('cpf_status_'+el.id);
+  if(fb) fb.textContent='';
+  el.style.borderColor='';
+}
 
 function maskCEP(el){
   let v=el.value.replace(/\D/g,'');
@@ -312,6 +459,58 @@ function triggerCEP(el){
   if(digits.length===8) lookupCEP(digits);
 }
 
+function maskSocioCEP(el,idx){
+  let v=el.value.replace(/\D/g,'');
+  if(v.length>5) v=v.substring(0,5)+'-'+v.substring(5,8);
+  el.value=v;
+}
+
+function triggerSocioCEP(el,idx){
+  const digits=el.value.replace(/\D/g,'');
+  if(digits.length===8) lookupSocioCEP(idx);
+}
+
+async function lookupSocioCEP(idx){
+  const cepEl=document.getElementById('socio_cep_'+idx);
+  if(!cepEl) return;
+  const cep=cepEl.value.replace(/\D/g,'');
+  if(cep.length!==8) return;
+  const spinner=document.getElementById('socio_cep_spinner_'+idx);
+  const ok=document.getElementById('socio_cep_ok_'+idx);
+  const err=document.getElementById('socio_cep_err_'+idx);
+  if(spinner) spinner.style.display='inline';
+  if(ok) ok.style.display='none';
+  if(err) err.style.display='none';
+  try{
+    const res=await apiFetch({
+      model:'claude-sonnet-4-20250514',
+      max_tokens:300,
+      tools:[{type:'web_search_20250305',name:'web_search'}],
+      messages:[{role:'user',content:'Qual o endereço do CEP '+cep+' no Brasil? Retorne APENAS um JSON com os campos: logradouro, bairro, localidade, uf. Sem explicações.'}]
+    });
+    const data=await res.json();
+    let text='';
+    for(const block of data.content||[]){ if(block.type==='text') text+=block.text; }
+    if(spinner) spinner.style.display='none';
+    if(!text.trim()){ if(err) err.style.display='inline'; return; }
+    const jsonMatch=text.match(/\{[\s\S]*?\}/);
+    if(!jsonMatch){ if(err) err.style.display='inline'; return; }
+    const d=JSON.parse(jsonMatch[0]);
+    const s=(id,val)=>{const el=document.getElementById(id);if(el&&val&&String(val).trim())el.value=String(val).trim();};
+    s('socio_logradouro_'+idx, d.logradouro);
+    s('socio_bairro_'+idx, d.bairro);
+    s('socio_municipio_'+idx, d.localidade||d.cidade);
+    const ufEl=document.getElementById('socio_uf_'+idx);
+    const uf=d.uf||d.estado;
+    if(ufEl&&uf){ for(let o of ufEl.options){ if(o.value===uf){ufEl.value=uf;break;} } }
+    if(ok) ok.style.display='inline';
+    setTimeout(()=>{ const n=document.getElementById('socio_numero_'+idx); if(n) n.focus(); },150);
+  }catch(e){
+    if(spinner) spinner.style.display='none';
+    if(err){ err.style.display='inline'; err.textContent='Erro ao buscar CEP'; }
+  }
+}
+
 async function lookupCEP(cep){
   cep=String(cep).replace(/\D/g,'');
   if(cep.length!==8) return;
@@ -322,33 +521,32 @@ async function lookupCEP(cep){
   if(ok){ok.style.display='none';}
   if(err){err.style.display='none';}
   try{
-    // try ViaCEP first, fallback to brasilapi
-    let d=null;
-    try{
-      const res=await fetch('https://viacep.com.br/ws/'+cep+'/json/');
-      d=await res.json();
-      if(d.erro) d=null;
-    }catch(e1){ d=null; }
-    if(!d){
-      const res2=await fetch('https://brasilapi.com.br/api/cep/v1/'+cep);
-      if(res2.ok){
-        const d2=await res2.json();
-        d={logradouro:d2.street,bairro:d2.neighborhood,localidade:d2.city,uf:d2.state};
-      }
-    }
+    const res=await apiFetch({
+      model:'claude-sonnet-4-20250514',
+      max_tokens:300,
+      tools:[{type:'web_search_20250305',name:'web_search'}],
+      messages:[{role:'user',content:'Qual o endereço do CEP '+cep+' no Brasil? Retorne APENAS um JSON com os campos: logradouro, bairro, localidade, uf. Sem explicações.'}]
+    });
+    const data=await res.json();
+    let text='';
+    for(const block of data.content||[]){ if(block.type==='text') text+=block.text; }
     if(spinner){spinner.style.display='none';}
-    if(!d){ if(err){err.style.display='inline';} return; }
-    const s=(id,val)=>{const el=document.getElementById(id);if(el&&val&&val.trim())el.value=val.trim();};
+    if(!text.trim()){ if(err){err.style.display='inline';} return; }
+    const jsonMatch=text.match(/\{[\s\S]*?\}/);
+    if(!jsonMatch){ if(err){err.style.display='inline';} return; }
+    const d=JSON.parse(jsonMatch[0]);
+    const s=(id,val)=>{const el=document.getElementById(id);if(el&&val&&String(val).trim())el.value=String(val).trim();};
     s('endereco',d.logradouro);
     s('bairro',d.bairro);
-    s('municipio',d.localidade);
+    s('municipio',d.localidade||d.cidade);
     const est=document.getElementById('estado');
-    if(est&&d.uf){ for(let o of est.options){ if(o.value===d.uf){est.value=d.uf;break;} } }
+    const uf=d.uf||d.estado;
+    if(est&&uf){ for(let o of est.options){ if(o.value===uf){est.value=uf;break;} } }
     if(ok){ok.style.display='inline';}
     setTimeout(()=>{ const n=document.getElementById('numero'); if(n) n.focus(); },150);
   }catch(e){
     if(spinner){spinner.style.display='none';}
-    if(err){err.style.display='inline';}
+    if(err){err.style.display='inline'; err.textContent='Erro ao buscar CEP';}
   }
 }
 
@@ -363,11 +561,10 @@ async function extractFromImage(){
   const btn=document.getElementById('extractBtn'); btn.textContent='⏳ Extraindo...'; btn.disabled=true;
   try{
     const b64=uploadedImageB64.split(',')[1]; const mime=uploadedImageB64.split(';')[0].split(':')[1];
-    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:800,messages:[{role:"user",content:[
+    const res=await apiFetch({model:"claude-sonnet-4-20250514",max_tokens:800,messages:[{role:"user",content:[
         {type:"image",source:{type:"base64",media_type:mime,data:b64}},
         {type:"text",text:`Extraia os dados deste documento em JSON com campos: nome, cpf, rg, orgao_emissor, nacionalidade, endereco, municipio, estado, cep, cnpj, razao_social. Retorne APENAS o JSON.`}
-      ]}]})});
+      ]}]});
     const d=await res.json();
     const parsed=JSON.parse(d.content[0].text.replace(/```json|```/g,'').trim());
     const m=(id,val)=>{const el=document.getElementById(id);if(el&&val)el.value=val;};
@@ -386,13 +583,17 @@ function collectData(){
   const data={tipo:selectedType,tipoSociedade:selectedSociety,razaoSocial:g('razaoSocial'),cnpj:g('cnpj'),nire:g('nire'),
     endereco:enderecoCompleto,municipio:g('municipio'),estado:g('estado'),cep:g('cep'),capital:g('capital'),
     objeto:g('objeto'),obs:g('obs'),alteracoes:[...altTypes],socios:[],
-    motivoBaixa:g('motivoBaixa'),dataBaixa:g('dataBaixa')};
+    motivoBaixa:g('motivoBaixa'),dataBaixa:g('dataBaixa'),
+    novoTipo:g('novoTipo'),novoNome:g('novoNome'),valorAcervo:g('valorAcervo'),dataTransformacao:g('dataTransformacao')};
   for(let i=0;i<socioCount;i++){
     if(!document.getElementById('socio_'+i)) continue;
     const nome=g(`socio_nome_${i}`); if(!nome) continue;
+    const sLogr=g(`socio_logradouro_${i}`), sNum=g(`socio_numero_${i}`), sBairro=g(`socio_bairro_${i}`);
+    const sMun=g(`socio_municipio_${i}`), sUf=g(`socio_uf_${i}`), sCep=g(`socio_cep_${i}`);
+    const sEnd=[sLogr,sNum,sBairro].filter(Boolean).join(', ')+(sMun?', '+sMun:'')+(sUf?'/'+sUf:'')+(sCep?', CEP '+sCep:'');
     data.socios.push({nome,cpf:g(`socio_cpf_${i}`),rg:g(`socio_rg_${i}`),orgao:g(`socio_orgao_${i}`),
       nac:g(`socio_nac_${i}`),civil:g(`socio_civil_${i}`),prof:g(`socio_prof_${i}`),
-      cota:g(`socio_cota_${i}`),status:g(`socio_status_${i}`),end:g(`socio_end_${i}`)});
+      cota:g(`socio_cota_${i}`),status:g(`socio_status_${i}`),end:sEnd});
   }
   return data;
 }
@@ -401,14 +602,13 @@ async function generateDoc(){
   const data=collectData(); if(!data.razaoSocial){alert('Informe a Razão Social.');return;}
   currentData=data; showPage(3);
   document.getElementById('btnDownload').disabled=true;
-  const tLabel={constituicao:'Constituição',alteracao:'Alteração Contratual',baixa:'Distrato / Baixa'}[data.tipo];
+  const tLabel={constituicao:'Constituição',alteracao:'Alteração Contratual',transformacao:'Transformação MEI',baixa:'Distrato / Baixa'}[data.tipo];
   document.getElementById('docLabel').textContent=`${tLabel} · ${data.tipoSociedade} · ${data.razaoSocial}`;
   document.getElementById('docDesc').textContent=`${tLabel} · ${data.tipoSociedade} · ${data.razaoSocial} · Revise antes de baixar.`;
   document.getElementById('previewContent').innerHTML='<div class="loading-state"><div class="spinner"></div><p>Gerando documento com IA...</p></div>';
 
   try{
-    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:3500,messages:[{role:"user",content:buildPrompt(data,tLabel)}]})});
+    const res=await apiFetch({model:"claude-sonnet-4-20250514",max_tokens:3500,messages:[{role:"user",content:buildPrompt(data,tLabel)}]});
     const result=await res.json();
     generatedText=result.content[0].text;
     document.getElementById('previewContent').textContent=generatedText;
@@ -438,6 +638,24 @@ Use algarismos ordinais por extenso para nomear as cláusulas.`;
 PREÂMBULO — identificação da empresa (razão social, CNPJ, NIRE), sócios presentes, declaração de quórum e validade
 Para cada alteração solicitada (${alts}): redigir nova cláusula com redação integral, indicando qual cláusula está sendo substituída
 CLÁUSULA FINAL — Ratificação das demais cláusulas e condições inalteradas do contrato social; providências de arquivamento na Junta Comercial`;
+  } else if(data.tipo==='transformacao'){
+    instrucoes=`Elabore o CONTRATO SOCIAL POR TRANSFORMAÇÃO DE EMPRESÁRIO INDIVIDUAL (MEI) EM SOCIEDADE EMPRESÁRIA, com base no art. 968, §3º do Código Civil e IN DREI nº 81/2020, contendo:
+PREÂMBULO — qualificação completa do titular/empresário individual (nome, CPF, RG, nacionalidade, estado civil, profissão, endereço), nome empresarial atual do MEI, CNPJ e NIRE
+PRIMEIRA PARTE — ATO DE TRANSFORMAÇÃO:
+CLÁUSULA PRIMEIRA — Decisão de transformação da natureza jurídica para ${data.novoTipo||'LTDA'}, conforme art. 968, §3º do CC, com o novo nome empresarial
+CLÁUSULA SEGUNDA — Utilização do acervo do empresário individual (R$ ${data.valorAcervo||'[valor]'}) para formação do capital social da sociedade
+SEGUNDA PARTE — CONTRATO SOCIAL POR TRANSFORMAÇÃO (todas as cláusulas obrigatórias do novo tipo societário):
+CLÁUSULA PRIMEIRA — Denominação social e tipo societário
+CLÁUSULA SEGUNDA — Sede e foro
+CLÁUSULA TERCEIRA — Objeto social
+CLÁUSULA QUARTA — Capital social, divisão em quotas e integralização mediante acervo
+CLÁUSULA QUINTA — Qualificação do(s) sócio(s) e participação
+CLÁUSULA SEXTA — Administração
+CLÁUSULA SÉTIMA — Distribuição de lucros
+CLÁUSULA OITAVA — Deliberações e quórum
+CLÁUSULA NONA — Dissolução
+CLÁUSULA DÉCIMA — Foro
+Observação final sobre manutenção do CNPJ e providências junto à Junta Comercial e Receita Federal.`;
   } else {
     instrucoes=`Elabore o DISTRATO SOCIAL, contendo:
 PREÂMBULO — qualificação completa da empresa e dos sócios
@@ -485,7 +703,7 @@ async function goPage4(){ showPage(4); document.getElementById('downloadArea').i
 async function generateWord(){
   const {Document,Packer,Paragraph,TextRun,AlignmentType}=docx;
   const data=currentData||collectData();
-  const tLabel={constituicao:'CONTRATO SOCIAL DE CONSTITUIÇÃO',alteracao:'ALTERAÇÃO DO CONTRATO SOCIAL',baixa:'DISTRATO SOCIAL'}[data.tipo];
+  const tLabel={constituicao:'CONTRATO SOCIAL DE CONSTITUIÇÃO',alteracao:'ALTERAÇÃO DO CONTRATO SOCIAL',transformacao:'CONTRATO SOCIAL POR TRANSFORMAÇÃO DE MEI',baixa:'DISTRATO SOCIAL'}[data.tipo];
   const lines=generatedText.split('\n');
   const children=[];
 
@@ -527,6 +745,7 @@ async function generateWord(){
     <p style="margin-top:14px;font-size:0.78rem;color:var(--mid)">Garamond · ABNT · Margens 3cm/2cm · A4 · Espaçamento 1,5</p>`;
 }
 
+document.addEventListener('DOMContentLoaded', updateKeyStatus);
 function newDoc(){ selectedType=''; selectedSociety=''; altTypes=[]; uploadedImageB64=''; socioCount=1; generatedText=''; currentData=null; document.querySelectorAll('.type-btn,.society-btn').forEach(b=>b.classList.remove('selected')); showPage(1); }
 </script>
 </body>
